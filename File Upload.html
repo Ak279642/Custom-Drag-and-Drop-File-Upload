@@ -1,0 +1,227 @@
+<?php
+include "navbar.php";
+?>
+<style>
+    .img_upload {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100px;
+        width: 250px;
+        border: 3px dotted purple;
+        margin: auto;
+        flex-direction: column;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+
+    .img_upload i {
+        font-size: 25px;
+        font-weight: bold;
+        color: purple;
+    }
+
+    .img_upload div {
+        font-size: 12px;
+        font-weight: bold;
+        color: purple;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    h5 {
+        margin-bottom: 20px;
+    }
+
+    .upload {
+        box-shadow: 1px 1px 10px gray;
+        width: 300px;
+        height: 400px;
+        padding: 10px;
+        margin: auto;
+    }
+
+    .upload-area .row {
+        background: #a5d6a7;
+        padding: 10px 10px;
+    }
+.upload-area.onprogress{
+    max-height: 270px;
+}
+    .progress-area .row {
+        background: #d1c4e9;
+        padding: 10px 10px 15px 10px;
+    }
+
+    section .row {
+        width: 250px;
+        margin: 0px auto 10px auto;
+        list-style-type: none;
+        padding: 10px 10px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+    }
+
+    section .details span {
+        font-size: 12px;
+        font-weight: bold;
+    }
+.upload-area{
+    max-height: 270px;
+    overflow-y: scroll;
+}
+    .upload-area .row .content {
+        display: flex;
+        flex-direction: column;
+        margin-left: 10px;
+    }
+
+    .upload-area .row .details {
+        display: flex;
+        margin-left: 15px;
+        flex-direction: column;
+    }
+
+    .upload-area .details .size {
+        font-size: 11px;
+        color: #404040;
+    }
+
+    .upload-area .fa-check {
+        font-size: 15px;
+        color: green;
+        margin-left: 15px;
+    }
+
+    .progress-area .content {
+        margin-left: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .percent {
+        margin-left: 15px;
+    }
+
+    .progress_div {
+        width: 90%;
+        height: 3px;
+        background-color: grey;
+        border-radius: 5px;
+        position: relative;
+        top: 5px;
+        box-shadow: 1px 1px 2px grey;
+        cursor: pointer;
+        transition: all 1s linear;
+        margin: auto;
+    }
+
+    .progress_bar {
+        position: absolute;
+        width: 50%;
+        height: 3px;
+        background-color: #311b92;
+        transition: all 0.2s linear;
+        border-radius: 5px;
+    }
+</style>
+
+<div class="container-fluid">
+    <h5>Upload Image to Gallery</h5>
+    <form method="post"  id="uploadForm" enctype="multipart/form-data" >
+<div class="upload">
+        <div class="img_upload">
+            <i class="fa fa-upload"></i><br>
+            <div>Drag & Drop File to Upload</div>
+            <input type="file" name="images" id="images" multiple>
+        </div></form>
+        <section class="progress-area">
+          
+        </section>
+        <section class="upload-area">
+         
+        </section>
+    </div>
+</div>
+
+<script
+>const data = document.querySelector("#uploadForm");
+const form = document.querySelector(".upload");
+let   fileInput = document.querySelector("#images");
+let progressArea = document.querySelector(".progress-area");
+let uploadArea =  document.querySelector(".upload-area");
+form.addEventListener("click", function (){
+fileInput.click();
+});
+fileInput.onchange = ({target})=>{
+    let file = target.files[0];
+    if(file){
+    let fileName = file.name;
+    if(fileName.length >= 5){
+        let splitName = fileName.split('.');
+        filename = splitName[0].substring(0, 5) + "... ."+ splitName[1];
+    }
+    console.log(fileName)
+    uploadFile(fileName);
+    }
+}
+function uploadFile(name){
+    let http = new XMLHttpRequest();
+    http.open("POST", "Card-Data/Upload.php", true);
+    http.upload.addEventListener("progress",({loaded, total}) =>{
+       let fileLoaded = Math.floor((loaded / total)*100);
+       let fileTotal = Math.floor(total/1000);
+       let fileSize;
+       (fileTotal < 1024) ? fileSize = fileTotal + " Kb" : fileSize = (loaded / (1024 * 1024)).toFixed(2) + " MB";
+       let progressHTML = `  <li class="row"><i class="fa fa-file-image-o"></i>
+                <div class="content">
+                    <div class="details">
+                        <span class="name">${filename} - Uploading</span>
+                        <span class="percent">${fileLoaded}%</span>
+                    </div>
+                </div>
+                <div class="progress_div">
+                    <div class="progress_bar" style="width:${fileLoaded}%">
+                    </div>
+                </div>
+            </li>`;
+            uploadArea.classList.add("onprogress");
+            progressArea.innerHTML = progressHTML;
+            if(loaded == total){
+                    progressArea.innerHTML = "";
+            let uploadedHTML =`   <li class="row"> 
+                                    <i class="fa fa-file-image-o"></i>
+                                    <div class="content">
+                                        <div class="details">
+                                            <span class="name">${filename} - Uploaded</span>
+                                            <span class="size">${fileSize}</span>
+                                        </div>
+                                    </div>
+                                    <i class="fa fa-check"></i>
+                                </li>`;
+            uploadArea.insertAdjacentHTML("afterbegin", uploadedHTML);
+            uploadArea.classList.remove("onprogress");
+      }                         
+    });
+    let formData = new FormData(data);
+    http.send(formData);
+    http.onreadystatechange = function() {
+          if (http.readyState == 4 && this.status == 200) {
+            console.log(http.response);
+          }
+        }
+}
+</script>
+<?php
+print_r($_FILES);
+$filename = $_FILES["images"]["name"];
+$tmpname = $_FILES["images"]["tmp_name"];
+$file_up_name = time().$filename;
+$path = "files/".$file_up_name;
+if(move_uploaded_file($tmpname, $path)){
+    echo $path;
+}
